@@ -43,13 +43,42 @@ function candyCrushGame() {
             grid.appendChild(square);
             squares.push(square);
         }
-        // Add drag event listeners
-        squares.forEach(square => square.addEventListener("dragstart", dragStart));
-        squares.forEach(square => square.addEventListener("dragend", dragEnd));
-        squares.forEach(square => square.addEventListener("dragover", dragOver));
-        squares.forEach(square => square.addEventListener("dragenter", dragEnter));
-        squares.forEach(square => square.addEventListener("dragleave", dragLeave));
-        squares.forEach(square => square.addEventListener("drop", dragDrop));
+
+        // Drag + Touch Event Listeners
+        squares.forEach(square => {
+            // PC Drag Events
+            square.addEventListener("dragstart", dragStart);
+            square.addEventListener("dragend", dragEnd);
+            square.addEventListener("dragover", dragOver);
+            square.addEventListener("dragenter", dragEnter);
+            square.addEventListener("dragleave", dragLeave);
+            square.addEventListener("drop", dragDrop);
+
+            // Mobile Touch Events
+            square.addEventListener("touchstart", function (e) {
+                e.preventDefault();
+                colorBeingDragged = this.style.backgroundImage;
+                squareIdBeingDragged = parseInt(this.id);
+            });
+
+            square.addEventListener("touchmove", function (e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (target && target.id) {
+                    squareIdBeingReplaced = parseInt(target.id);
+                    colorBeingReplaced = target.style.backgroundImage;
+                }
+            });
+
+            square.addEventListener("touchend", function () {
+                if (squareIdBeingReplaced != null) {
+                    squares[squareIdBeingReplaced].style.backgroundImage = colorBeingDragged;
+                    squares[squareIdBeingDragged].style.backgroundImage = colorBeingReplaced;
+                    dragEnd();
+                }
+            });
+        });
     }
 
     // Drag and Drop Functions
@@ -80,7 +109,7 @@ function candyCrushGame() {
     }
 
     function dragEnd() {
-        // Define valid moves (adjacent squares: left, up, right, down)
+        // Define valid moves
         let validMoves = [
             squareIdBeingDragged - 1,
             squareIdBeingDragged - width,
@@ -90,27 +119,23 @@ function candyCrushGame() {
         let validMove = validMoves.includes(squareIdBeingReplaced);
 
         if (squareIdBeingReplaced && validMove) {
-            squareIdBeingReplaced = null; // Move is valid, keep the swap
+            squareIdBeingReplaced = null;
         } else if (squareIdBeingReplaced && !validMove) {
-            // Invalid move, revert the swap
             squares[squareIdBeingReplaced].style.backgroundImage = colorBeingReplaced;
             squares[squareIdBeingDragged].style.backgroundImage = colorBeingDragged;
         } else {
-            // No drop occurred, revert to original
             squares[squareIdBeingDragged].style.backgroundImage = colorBeingDragged;
         }
     }
 
     // Move Candies Down
     function moveIntoSquareBelow() {
-        // Fill empty squares in the first row
         for (let i = 0; i < width; i++) {
             if (squares[i].style.backgroundImage === "") {
                 let randomColor = Math.floor(Math.random() * candyColors.length);
                 squares[i].style.backgroundImage = candyColors[randomColor];
             }
         }
-        // Move candies down to fill gaps
         for (let i = 0; i < width * (width - 1); i++) {
             if (squares[i + width].style.backgroundImage === "") {
                 squares[i + width].style.backgroundImage = squares[i].style.backgroundImage;
@@ -122,10 +147,10 @@ function candyCrushGame() {
     // Check for Matches
     function checkRowForFour() {
         for (let i = 0; i < 60; i++) {
-            if (i % width >= width - 3) continue; // Skip if not enough columns left
+            if (i % width >= width - 3) continue;
             let rowOfFour = [i, i + 1, i + 2, i + 3];
             let decidedColor = squares[i].style.backgroundImage;
-            const isBlank = squares[i].style.backgroundImage === "";
+            const isBlank = decidedColor === "";
             if (rowOfFour.every(index => squares[index].style.backgroundImage === decidedColor && !isBlank)) {
                 score += 4;
                 scoreDisplay.innerHTML = score;
@@ -138,7 +163,7 @@ function candyCrushGame() {
         for (let i = 0; i < 40; i++) {
             let columnOfFour = [i, i + width, i + 2 * width, i + 3 * width];
             let decidedColor = squares[i].style.backgroundImage;
-            const isBlank = squares[i].style.backgroundImage === "";
+            const isBlank = decidedColor === "";
             if (columnOfFour.every(index => squares[index].style.backgroundImage === decidedColor && !isBlank)) {
                 score += 4;
                 scoreDisplay.innerHTML = score;
@@ -149,10 +174,10 @@ function candyCrushGame() {
 
     function checkRowForThree() {
         for (let i = 0; i < 62; i++) {
-            if (i % width >= width - 2) continue; // Skip if not enough columns left
+            if (i % width >= width - 2) continue;
             let rowOfThree = [i, i + 1, i + 2];
             let decidedColor = squares[i].style.backgroundImage;
-            const isBlank = squares[i].style.backgroundImage === "";
+            const isBlank = decidedColor === "";
             if (rowOfThree.every(index => squares[index].style.backgroundImage === decidedColor && !isBlank)) {
                 score += 3;
                 scoreDisplay.innerHTML = score;
@@ -165,7 +190,7 @@ function candyCrushGame() {
         for (let i = 0; i < 48; i++) {
             let columnOfThree = [i, i + width, i + 2 * width];
             let decidedColor = squares[i].style.backgroundImage;
-            const isBlank = squares[i].style.backgroundImage === "";
+            const isBlank = decidedColor === "";
             if (columnOfThree.every(index => squares[index].style.backgroundImage === decidedColor && !isBlank)) {
                 score += 3;
                 scoreDisplay.innerHTML = score;
@@ -188,14 +213,14 @@ function candyCrushGame() {
         currentMode = mode;
         modeSelection.style.display = "none";
         grid.style.display = "flex";
-        scoreDisplay.parentElement.style.display = "flex"; // Show scoreboard
+        scoreDisplay.parentElement.style.display = "flex";
         createBoard();
         score = 0;
         scoreDisplay.innerHTML = score;
         gameInterval = setInterval(gameLoop, 100);
 
         if (mode === "timed") {
-            timeLeft = 120; // 2 minutes in seconds
+            timeLeft = 120;
             updateTimerDisplay();
             timerInterval = setInterval(() => {
                 timeLeft--;
@@ -206,11 +231,10 @@ function candyCrushGame() {
                 }
             }, 1000);
         } else {
-            timerDisplay.innerHTML = ""; // Clear timer in Endless Mode
+            timerDisplay.innerHTML = "";
         }
     }
 
-    // Update Timer Display
     function updateTimerDisplay() {
         if (currentMode === "timed") {
             let minutes = Math.floor(timeLeft / 60);
@@ -221,14 +245,12 @@ function candyCrushGame() {
         }
     }
 
-    // End Game (Timed Mode)
     function endGame() {
         clearInterval(gameInterval);
         squares.forEach(square => square.setAttribute("draggable", false));
         alert(`Time's Up! Your score is ${score}`);
     }
 
-    // Change Mode
     function changeMode() {
         clearInterval(gameInterval);
         if (currentMode === "timed") {
@@ -236,10 +258,9 @@ function candyCrushGame() {
         }
         grid.style.display = "none";
         scoreDisplay.parentElement.style.display = "none";
-        modeSelection.style.display = "flex"; // Show mode selection screen
+        modeSelection.style.display = "flex";
     }
 
-    // Event Listeners
     endlessButton.addEventListener("click", () => startGame("endless"));
     timedButton.addEventListener("click", () => startGame("timed"));
     changeModeButton.addEventListener("click", changeMode);
