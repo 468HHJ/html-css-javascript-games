@@ -1,83 +1,210 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Game Collection</title>
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #111;
-        color: #fff;
-        margin: 0;
-        padding: 0;
-        text-align: center;
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>My HTML Games — Play</title>
+  <style>
+    :root{
+      --bg:#071022; --card:#0b1220; --muted:#9aa5b1; --accent:#06b6d4;
     }
-    h1 {
-        margin-top: 20px;
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,"Noto Sans",Arial;background:linear-gradient(180deg,#071024,#04121a);color:#e6eef3;min-height:100vh;}
+    header{padding:14px 18px;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.02)}
+    header h1{margin:0;font-size:18px}
+    .wrap{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:16px;height:calc(100vh - 68px);}
+    .sidebar{background:var(--card);border-radius:10px;padding:12px;overflow:auto}
+    .game-list{display:flex;flex-direction:column;gap:8px}
+    .game-item{display:flex;gap:10px;align-items:center;padding:8px;border-radius:8px;cursor:pointer;transition:all .12s;background:transparent}
+    .game-item:hover{transform:translateY(-2px);background:rgba(255,255,255,0.02)}
+    .game-item.active{outline:2px solid rgba(6,182,212,0.12);background:linear-gradient(90deg, rgba(6,182,212,0.03), transparent)}
+    .gi-thumb{width:52px;height:40px;border-radius:6px;background:linear-gradient(135deg,#08324a,#04202b);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted);font-size:12px}
+    .gi-info{flex:1}
+    .gi-title{font-size:14px;margin:0}
+    .gi-sub{font-size:12px;color:var(--muted);margin:0}
+
+    .main{background:var(--card);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+    .controls{display:flex;gap:8px;align-items:center;justify-content:space-between}
+    .btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:8px;color:inherit;cursor:pointer}
+    .iframe-wrap{flex:1;position:relative;border-radius:8px;overflow:hidden;background:#000;min-height:300px}
+    iframe{width:100%;height:100%;border:0;display:block}
+
+    .note{font-size:12px;color:var(--muted)}
+
+    @media (max-width:880px){
+      .wrap{grid-template-columns:1fr; padding:10px; height:calc(100vh - 68px)}
+      .sidebar{order:2;height:220px}
+      .main{order:1;min-height:60vh}
     }
-    .game-list {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        margin-top: 20px;
-        gap: 15px;
-    }
-    .game-card {
-        background: #222;
-        padding: 15px;
-        border-radius: 8px;
-        width: 200px;
-        cursor: pointer;
-        transition: 0.3s;
-    }
-    .game-card:hover {
-        background: #444;
-    }
-    iframe {
-        width: 100%;
-        height: 80vh;
-        border: none;
-        margin-top: 20px;
-    }
-    button {
-        background: #ff5722;
-        border: none;
-        padding: 10px 20px;
-        color: white;
-        cursor: pointer;
-        margin-top: 10px;
-    }
-</style>
+  </style>
 </head>
 <body>
+  <header>
+    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36'%3E%3Crect rx='8' width='36' height='36' fill='%2306b6d4'/%3E%3Ctext x='50%25' y='55%25' font-family='Arial' font-size='14' text-anchor='middle' fill='%230b1220'%3EGG%3C/text%3E%3C/svg%3E" alt="logo" style="width:36px;height:36px;border-radius:8px">
+    <div style="flex:1">
+      <h1 style="margin:0">HTML Games Collection</h1>
+      <div class="note">30 games — click to play. Mobile touch friendly.</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn" id="openNewTab">Open in new tab</button>
+      <button class="btn" id="fullscreenBtn">Fullscreen</button>
+    </div>
+  </header>
 
-<h1>🎮 My Game Collection</h1>
-<div class="game-list">
-    <div class="game-card" onclick="loadGame('snake/index.html')">🐍 Snake Game</div>
-    <div class="game-card" onclick="loadGame('tetris/index.html')">🧱 Tetris</div>
-    <div class="game-card" onclick="loadGame('flappy-bird/index.html')">🐦 Flappy Bird</div>
-    <div class="game-card" onclick="loadGame('tic-tac-toe/index.html')">❌⭕ Tic Tac Toe</div>
-</div>
+  <div class="wrap">
+    <aside class="sidebar">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Games list</div>
+      <div class="game-list" id="gameList"></div>
+      <div class="note" style="margin-top:10px">अगर iframe कोई game load न करे → "Open in new tab" दबाएं।</div>
+    </aside>
 
-<div id="gameArea" style="display:none;">
-    <iframe id="gameFrame"></iframe>
-    <br>
-    <button onclick="closeGame()">⬅ Back to Menu</button>
-</div>
+    <main class="main">
+      <div class="controls">
+        <div><strong id="currentTitle">Select a game to play →</strong></div>
+        <div class="note" id="statusNote"></div>
+      </div>
 
-<script>
-function loadGame(path) {
-    document.querySelector('.game-list').style.display = 'none';
-    document.getElementById('gameArea').style.display = 'block';
-    document.getElementById('gameFrame').src = path;
-}
-function closeGame() {
-    document.querySelector('.game-list').style.display = 'flex';
-    document.getElementById('gameArea').style.display = 'none';
-    document.getElementById('gameFrame').src = '';
-}
-</script>
+      <div class="iframe-wrap" id="frameWrap">
+        <iframe id="gameFrame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>
+      </div>
 
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="note">Tip: Mobile users — use landscape for best experience.</div>
+        <div class="note">Built for demo • MIT</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    /* ========== Edit these if folder names differ in your repo ========== */
+    const games = [
+      {id:1, title:"01 - Candy Crush", path:"01-Candy-Crush-Game"},
+      {id:2, title:"02 - Archery", path:"02-Archery-Game"},
+      {id:3, title:"03 - Speed Typing", path:"03-Speed-Typing-Game"},
+      {id:4, title:"04 - Breakout", path:"04-Breakout-Game"},
+      {id:5, title:"05 - Minesweeper", path:"05-Minesweeper-Game"},
+      {id:6, title:"06 - Tower Blocks", path:"06-Tower-Blocks"},
+      {id:7, title:"07 - Ping Pong", path:"07-Ping-Pong-Game"},
+      {id:8, title:"08 - Tetris", path:"08-Tetris-Game"},
+      {id:9, title:"09 - Tilting Maze", path:"09-Tilting-Maze-Game"},
+      {id:10, title:"10 - Memory Card", path:"10-Memory-Card-Game"},
+      {id:11, title:"11 - Rock Paper Scissors", path:"11-Rock-Paper-Scissors"},
+      {id:12, title:"12 - Type Number Guessing", path:"12-Type-Number-Guessing-Game"},
+      {id:13, title:"13 - Tic Tac Toe", path:"13-Tic-Tac-Toe"},
+      {id:14, title:"14 - Snake", path:"14-Snake-Game"},
+      {id:15, title:"15 - Connect Four", path:"15-Connect-Four-Game"},
+      {id:16, title:"16 - Insect Catch", path:"16-Insect-Catch-Game"},
+      {id:17, title:"17 - Typing Game", path:"17-Typing-Game"},
+      {id:18, title:"18 - Hangman", path:"18-Hangman-Game"},
+      {id:19, title:"19 - Flappy Bird", path:"19-Flappy-Bird-Game"},
+      {id:20, title:"20 - Crossy Road", path:"20-Crossy-Road-Game"},
+      {id:21, title:"21 - 2048", path:"21-2048-Game"},
+      {id:22, title:"22 - Dice Roll", path:"22-Dice-Roll-Simulator"},
+      {id:23, title:"23 - Shape Clicker", path:"23-Shape-Clicker-Game"},
+      {id:24, title:"24 - Typing Game #2", path:"24-Typing-Game"},
+      {id:25, title:"25 - Speak Number Guessing", path:"25-Speak-Number-Guessing-Game"},
+      {id:26, title:"26 - Fruit Slicer", path:"26-Fruit-Slicer-Game"},
+      {id:27, title:"27 - Quiz Game", path:"27-Quiz-Game"},
+      {id:28, title:"28 - Emoji Catcher", path:"28-Emoji-Catcher-Game"},
+      {id:29, title:"29 - Whack-A-Mole", path:"29-Whack-A-Mole-Game"},
+      {id:30, title:"30 - Simon Says", path:"30-Simon-Says-Game"}
+    ];
+
+    const listEl = document.getElementById('gameList');
+    const frame = document.getElementById('gameFrame');
+    const titleEl = document.getElementById('currentTitle');
+    const statusNote = document.getElementById('statusNote');
+    const frameWrap = document.getElementById('frameWrap');
+
+    // Create list entries
+    games.forEach(g => {
+      const div = document.createElement('div');
+      div.className = 'game-item';
+      div.dataset.path = g.path;
+
+      const thumb = document.createElement('div');
+      thumb.className = 'gi-thumb';
+      thumb.innerText = String(g.id).padStart(2,'0');
+
+      const info = document.createElement('div');
+      info.className = 'gi-info';
+      const t = document.createElement('p'); t.className='gi-title'; t.innerText = g.title;
+      const s = document.createElement('p'); s.className='gi-sub'; s.innerText = g.path;
+      info.appendChild(t); info.appendChild(s);
+
+      div.appendChild(thumb); div.appendChild(info);
+
+      div.addEventListener('click', () => {
+        document.querySelectorAll('.game-item').forEach(el=>el.classList.remove('active'));
+        div.classList.add('active');
+        loadGame(g);
+      });
+
+      listEl.appendChild(div);
+    });
+
+    // Load selected game into iframe (relative path within repo)
+    function loadGame(g){
+      const url = './' + g.path + '/';
+      titleEl.innerText = 'Playing: ' + g.title;
+      statusNote.innerText = '';
+      frame.src = url;
+      frame.dataset.current = url;
+
+      // Add small timeout to detect 404 or blocked embed (if fails to load)
+      let loaded = false;
+      function onLoad(){ loaded = true; statusNote.innerText = ''; frame.removeEventListener('load', onLoad); }
+      frame.addEventListener('load', onLoad);
+      setTimeout(()=> {
+        if(!loaded){
+          statusNote.innerText = 'अगर लोड नहीं हुआ, तो "Open in new tab" दबाकर जांचें (CORS/GitHub Pages hosting)।';
+        }
+      }, 1500);
+    }
+
+    // Default: load first game
+    if(games.length) {
+      // mark first active
+      const first = document.querySelector('.game-item');
+      if(first) first.classList.add('active');
+      loadGame(games[0]);
+    }
+
+    // Open current in new tab
+    document.getElementById('openNewTab').addEventListener('click', function(){
+      const url = frame.dataset.current || frame.src;
+      if(!url) return alert('कोई गेम चुना नहीं गया है।');
+      // For GitHub Pages, open absolute URL
+      let abs = url;
+      // If running from GitHub Pages domain, convert to absolute
+      if(location.hostname.endsWith('github.io')){
+        // repo assumed to be at /<repo>/
+        // Keep relative path which works as absolute on pages
+        abs = new URL(url, location.href).href;
+      }
+      window.open(abs, '_blank');
+    });
+
+    // Fullscreen toggle for iframe container
+    document.getElementById('fullscreenBtn').addEventListener('click', function(){
+      const el = frameWrap;
+      if(el.requestFullscreen) el.requestFullscreen();
+      else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      else alert('Fullscreen समर्थित नहीं है आपके ब्राउज़र में।');
+    });
+
+    // Touch improvements: prevent page scroll when touching iframe area
+    frameWrap.addEventListener('touchstart', function(e){ e.preventDefault(); }, {passive:false});
+
+    // Optional: convert touch events to mouse events for games that listen to mouse
+    (function(){
+      var selectors = ['iframe'];
+      var elements = selectors.map(s => document.querySelector(s)).filter(Boolean);
+      if(elements.length === 0) return;
+      // We cannot inject events inside iframe due to cross-origin; but most games inside repo are same-origin on GitHub Pages, so they will receive pointer events.
+      // If some games still don't react to touch, user can open in new tab.
+    })();
+
+  </script>
 </body>
 </html>
